@@ -27,9 +27,11 @@
             </div>
         </div>
 
+
         <div id="btnRefreshBalance" class="w-full mt-8" style="display:none;">
             <button onclick="getBalances()" class="px-4 py-2 bg-green-600 rounded hover:bg-green-500 w-full">Refrescar Balances</button>
         </div>
+
 
         <div class="text-xl font-semibold">
             <h2 class="mt-6 text-center">Gestion de liquidez (Agregar o quitar liquidez debes ser en pares) </h2>
@@ -39,10 +41,11 @@
             <!-- Agregar y Quitar liquidez en el mismo renglon -->
             <div class="flex space-x-4 mb-6">
                 <div class="w-1/2">
-                    <input type="number" id="liquidityA" class="w-full p-2 bg-gray-700 text-white rounded" placeholder="Monto Token A" />
+                    <input type="number" id="liquidityA" class="w-full p-2 bg-gray-700 text-white rounded" placeholder="Monto Token A" disabled/>
+                    
                 </div>
                 <div class="w-1/2">
-                    <input type="number" id="liquidityB" class="w-full p-2 bg-gray-700 text-white rounded" placeholder="Monto Token B" />
+                    <input type="number" id="liquidityB" class="w-full p-2 bg-gray-700 text-white rounded" placeholder="Monto Token B" disabled/>
                 </div>
                 <div class="w-1/2">
                     <button id="btnAddLiquidity" onclick="addLiquidity()" class="w-full px-4 py-2 bg-teal-600 rounded hover:bg-teal-500 hidden">Agregar Liquidez</button>
@@ -60,13 +63,13 @@
             <div class="mt-8">
                 <!-- Intercambio A a B -->
                 <div class="flex space-x-4 mb-6">
-                    <input type="number" id="swapA" class="w-1/3 p-2 bg-gray-700 text-white rounded" placeholder="Cantidad de Token A" />
+                    <input type="number" id="swapA" class="w-1/3 p-2 bg-gray-700 text-white rounded" placeholder="Cantidad de Token A" disabled/>
                     <button id="btnAtoB" onclick="swap('AtoB')" class="w-1/3 px-4 py-2 bg-purple-600 rounded hover:bg-purple-500 hidden">Intercambiar Token A por B</button>
                 </div>
 
                 <!-- Intercambio B a A -->
                 <div class="flex space-x-4">
-                    <input type="number" id="swapB" class="w-1/3 p-2 bg-gray-700 text-white rounded" placeholder="Cantidad de Token B" />
+                    <input type="number" id="swapB" class="w-1/3 p-2 bg-gray-700 text-white rounded" placeholder="Cantidad de Token B" disabled/>
                     <button id="btnBtoA" onclick="swap('BtoA')" class="w-1/3 px-4 py-2 bg-pink-600 rounded hover:bg-pink-500 hidden">Intercambiar Token B por A</button>
                 </div>
             </div>
@@ -88,9 +91,11 @@
             </div>
         </div>
 
+
         <div id="btnRefreshReserve" class="w-full mt-8" style="display:none;">
             <button onclick="getReserves()" class="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-500 w-full">Refrescar Reservas</button>
         </div>
+
 
         <div class="text-xl font-semibold">
             <h2 class="mt-6 text-center">Precio Tokens</h2>
@@ -108,9 +113,11 @@
             </div>
         </div>
 
+
         <div id="btnRefreshPrecio" class="w-full mt-8" style="display:none;">
-            <button onclick="getPrice()" class="px-4 py-2 bg-indigo-600 rounded hover:bg-indigo-500 w-full">Refrescar Precio</button>
+            <button onclick="getPrice()" class="px-4 py-2 bg-indigo-500 rounded hover:bg-yellow-500 w-full">Refrescar Precios</button>
         </div>
+
 
     </div>
 </body>
@@ -180,13 +187,17 @@
                 // Mostrar información en la interfaz
                 document.getElementById('btnConnect').style.display = 'none';
                 document.getElementById('btnDisconnect').style.display = 'inline';
+                document.getElementById('btnRefreshBalance').style.display = 'inline-block';
                 document.getElementById('btnRefreshReserve').style.display = 'inline-block';
-                document.getElementById('btnRefreshBalance').style.display = 'inline';
-                document.getElementById('btnRefreshPrecio').style.display = 'inline';
+                document.getElementById('btnRefreshPrecio').style.display = 'inline-block';
                 document.getElementById('btnAddLiquidity').style.display = 'inline';
                 document.getElementById('btnRemoveLiquidity').style.display = 'inline';
                 document.getElementById('btnAtoB').style.display = 'inline';
                 document.getElementById('btnBtoA').style.display = 'inline';
+                document.getElementById('liquidityA').disabled = false;
+                document.getElementById('liquidityB').disabled = false;
+                document.getElementById('swapA').disabled = false;
+                document.getElementById('swapB').disabled = false;
 
                 document.getElementById('status').innerText = `Estado: Conectado a la Billetera ${address}`;
                 document.getElementById('ethBalance').style.display = 'block';
@@ -222,6 +233,24 @@
             document.getElementById("reserveB").innerText = 'Espera conexion de la billetera...';
             document.getElementById('PrecioA').innerText = 'Espera conexion de la billetera...';
             document.getElementById('PrecioB').innerText = 'Espera conexion de la billetera...';
+
+
+
+            document.getElementById('liquidityA').value = ''; // Borra el valor
+            document.getElementById('liquidityA').placeholder = 'Monto Token A';
+            document.getElementById('liquidityB').value = ''; // Borra el valor
+            document.getElementById('liquidityB').placeholder = 'Monto Token B';
+            document.getElementById('swapA').value = ''; // Borra el valor
+            document.getElementById('swapA').placeholder = 'Cantidad de Token A';
+            document.getElementById('swapB').value = ''; // Borra el valor
+            document.getElementById('swapB').placeholder = 'Cantidad de Token B';
+
+            document.getElementById('liquidityA').disabled = true;
+            document.getElementById('liquidityB').disabled = true;
+            document.getElementById('swapA').disabled = true;
+            document.getElementById('swapB').disabled = true;
+
+
         }
 
         // Función para obtener balance de un token ERC20
@@ -259,9 +288,18 @@
                 await getBalances();
                 await getReserves();
                 await getPrice();
+
+                document.getElementById('liquidityA').value = ''; // Borra el valor
+                document.getElementById('liquidityA').placeholder = 'Monto Token A';
+                document.getElementById('liquidityB').value = ''; // Borra el valor
+                document.getElementById('liquidityB').placeholder = 'Monto Token B';
             } catch (error) {
                 console.error("Error al agregar liquidez", error);
                 alert("Fallo agregar liquidez. Verifica la consola para más detalles.");
+                document.getElementById('liquidityA').value = ''; // Borra el valor
+                document.getElementById('liquidityA').placeholder = 'Monto Token A';
+                document.getElementById('liquidityB').value = ''; // Borra el valor
+                document.getElementById('liquidityB').placeholder = 'Monto Token B';
             }
         }
 
@@ -281,9 +319,17 @@
                 await getBalances();
                 await getReserves();
                 await getPrice();
+                document.getElementById('liquidityA').value = ''; // Borra el valor
+                document.getElementById('liquidityA').placeholder = 'Monto Token A';
+                document.getElementById('liquidityB').value = ''; // Borra el valor
+                document.getElementById('liquidityB').placeholder = 'Monto Token B';
             } catch (error) {
                 console.error("Error quitando liquidez del DEX", error);
                 alert("Fallo quitar liquidez del DEX. Verifica la consola para más detalles.");
+                document.getElementById('liquidityA').value = ''; // Borra el valor
+                document.getElementById('liquidityA').placeholder = 'Monto Token A';
+                document.getElementById('liquidityB').value = ''; // Borra el valor
+                document.getElementById('liquidityB').placeholder = 'Monto Token B';
             }
         }
 
@@ -315,9 +361,17 @@
                 await getBalances();
                 await getReserves();
                 await getPrice();
+                document.getElementById('swapA').value = ''; // Borra el valor
+                document.getElementById('swapA').placeholder = 'Cantidad de Token A';
+                document.getElementById('swapB').value = ''; // Borra el valor
+                document.getElementById('swapB').placeholder = 'Cantidad de Token B';
             } catch (error) {
                 console.error("Error ejecutando el swap:", error);
                 alert("Falló el intercambio. Verifica la consola para más detalles.");
+                document.getElementById('swapA').value = ''; // Borra el valor
+                document.getElementById('swapA').placeholder = 'Cantidad de Token A';
+                document.getElementById('swapB').value = ''; // Borra el valor
+                document.getElementById('swapB').placeholder = 'Cantidad de Token B';
             }
         }
 
