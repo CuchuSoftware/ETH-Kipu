@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interacción con Contratos de Tokens</title>
+    <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Interacción con Contratos de Tokens</h1>
+
+    <!-- Conexión con MetaMask -->
+    <section>
+        <h2>Conectar Wallet</h2>
+        <button onclick="connectWallet()">Conectar Wallet</button>
+        <p id="status">No conectado</p>
+    </section>
+
+    <p id="ethBalance" style="display: none;">Balance de Wallet:</p>
+
+    <!-- Minting de Tokens -->
+    <section>
+        <h2>Acuñar Tokens</h2>
+        <label for="mintAmount">Cantidad de Tokens a acuñar:</label>
+        <input type="number" id="mintAmount" placeholder="Cantidad de tokens a acuñar">
+        <button onclick="mintTokens()">Acuñar Tokens</button>
+    </section>
+
+    <script type="module">
+        import { ethers } from "https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.min.js";
+
+        // Dirección y ABI del contrato de token B
+        const tokenAAddress = "0xb21B7991652977A45A6F2553717B99252BA8D45c"; // Dirección del contrato del Token A
+        const tokenAABI = [
+            "function balanceOf(address) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function mint(uint256 amount) public",
+            "function approve(address spender, uint256 amount) public returns (bool)"
+        ];
+
+        let provider, signer, tokenBContract;
+
+        // Función para conectar la wallet
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    alert("MetaMask no está instalado. Por favor, instálalo para usar esta aplicación.");
+                    return;
+                }
+
+                // Solicitar acceso a MetaMask
+                await ethereum.request({ method: "eth_requestAccounts" });
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+
+                tokenBContract = new ethers.Contract(tokenAAddress, tokenAABI, signer);
+
+                const address = await signer.getAddress();
+                const balance = await provider.getBalance(address);
+                const formattedBalance = ethers.formatEther(balance);
+
+                document.getElementById('ethBalance').style.display = 'block';
+                document.getElementById('ethBalance').innerText = `Balance de Wallet: ${formattedBalance} ETH`;
+
+                // Mostrar la cuenta conectada
+                document.getElementById('status').innerText = `Conectado a la cuenta ${address}`;
+            } catch (error) {
+                console.error("Error conectando la wallet:", error);
+                alert("No se pudo conectar la wallet.");
+            }
+        }
+
+        // Función para acuñar nuevos tokens
+        async function mintTokens() {
+            try {
+                const amount = document.getElementById("mintAmount").value;
+
+                if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                    alert("Por favor ingresa una cantidad válida de tokens.");
+                    return;
+                }
+
+                // Convertir la cantidad de tokens a acuñar a unidades más pequeñas
+                const amountInUnits = ethers.parseUnits(amount, 18); // Ajustar según los decimales del token
+
+                // Llamar al contrato para acuñar tokens
+                await tokenBContract.mint(amountInUnits);
+
+                alert("Tokens acuñados exitosamente.");
+            } catch (error) {
+                console.error("Error acuñando tokens:", error);
+                alert("No se pudo acuñar tokens.");
+            }
+        }
+
+        // Exportar funciones globalmente
+        window.connectWallet = connectWallet;
+        window.mintTokens = mintTokens;
+    </script>
+
+</body>
+</html>
