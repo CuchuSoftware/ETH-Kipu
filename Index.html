@@ -28,8 +28,8 @@
         </div>
 
 
-        <div id="btnRefreshBalance" class="w-full mt-8">
-            <button onclick="getBalances()" class="px-4 py-2 bg-green-600 rounded hover:bg-green-500 w-full" disabled>Refrescar Balances</button>
+        <div class="w-full mt-8">
+            <button id="btnRefreshBalance" onclick="getBalances()" class="px-4 py-2 bg-green-600 rounded hover:bg-green-500 w-full" disabled>Refrescar Balances</button>
         </div>
 
 
@@ -92,8 +92,8 @@
         </div>
 
 
-        <div id="btnRefreshReserve" class="w-full mt-8">
-            <button onclick="getReserves()" class="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-500 w-full" disabled>Refrescar Reservas</button>
+        <div class="w-full mt-8">
+            <button id="btnRefreshReserve" onclick="getReserves()" class="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-500 w-full" disabled>Refrescar Reservas</button>
         </div>
 
 
@@ -114,8 +114,8 @@
         </div>
 
 
-        <div id="btnRefreshPrecio" class="w-full mt-8">
-            <button onclick="getPrice()" class="px-4 py-2 bg-indigo-500 rounded hover:bg-indigo-600 w-full" disabled>Refrescar Precios</button>
+        <div class="w-full mt-8" disabled>
+            <button id="btnRefreshPrecio" onclick="getPrice()" class="px-4 py-2 bg-indigo-500 rounded hover:bg-indigo-600 w-full" disabled>Refrescar Precios</button>
         </div>
 
 
@@ -281,18 +281,37 @@
         // Función para agregar liquidez
         async function addLiquidity() {
             try {
-                const amountA = ethers.parseUnits(document.getElementById("liquidityA").value, 18);
-                const amountB = ethers.parseUnits(document.getElementById("liquidityB").value, 18);
+                // Obtener los valores de los campos de entrada
+                const amountA = document.getElementById("liquidityA").value.trim().replace(',', '.');
+                const amountB = document.getElementById("liquidityB").value.trim().replace(',', '.');
+
+                if (!amountA || !amountB ) {
+                    alert("Para agregar liquidez deben completar ambos campos, siempre se agrega en pares");
+                    return;
+                }
+
+                if (amountA <= 0 || amountB <= 0) {
+                    alert("Los montos deben ser superiores a cero");
+                    return;
+                }
+                        
+                console.log("Valores originales:", amountA, amountB);
+
+                // Convertir directamente con ethers.parseUnits
+                const parsedAmountA = ethers.parseUnits(amountA, 18); // 18 decimales
+                const parsedAmountB = ethers.parseUnits(amountB, 18); // 18 decimales
+
+                console.log("Valores convertidos:", parsedAmountA.toString(), parsedAmountB.toString());
             
                 // Aprobar ambos tokens
-                const approveTxA = await tokenAContract.approve(dexAddress, amountA);
+                const approveTxA = await tokenAContract.approve(dexAddress, parsedAmountA);
                 await approveTxA.wait();  // Esperar que se confirme la transacción
 
-                const approveTxB = await tokenBContract.approve(dexAddress, amountB);
+                const approveTxB = await tokenBContract.approve(dexAddress, parsedAmountB);
                 await approveTxB.wait();  // Esperar que se confirme la transacción
             
                 // Llamar a la función de añadir liquidez
-                const addLiquidityTx = await dexContract.addLiquidity(amountA, amountB);
+                const addLiquidityTx = await dexContract.addLiquidity(parsedAmountA, parsedAmountB);
                 await addLiquidityTx.wait();  // Esperar que se confirme la transacción de liquidez
             
                 alert("Liquidez agregada con exito");
@@ -317,16 +336,34 @@
         async function removeLiquidity() {
             try {
                 // Obtener los valores de los campos de entrada
-                const amountA = ethers.parseUnits(document.getElementById("liquidityA").value, 18);
-                const amountB = ethers.parseUnits(document.getElementById("liquidityB").value, 18);
-            
-                // Llamar a la función del contrato `removeLiquidity` con los parámetros correctos
-                const removeLiquidityTx = await dexContract.removeLiquidity(amountA, amountB);
-            
+                const amountA = document.getElementById("liquidityA").value.trim().replace(',', '.');
+                const amountB = document.getElementById("liquidityB").value.trim().replace(',', '.');
+                        
+                if (!amountA || !amountB ) {
+                    alert("Para quitar liquidez deben completar ambos campos, siempre se retira en pares");
+                    return;
+                }
+
+                if (amountA <= 0 || amountB <= 0) {
+                    alert("Los montos deben ser superiores a cero");
+                    return;
+                }
+
+                console.log("Valores originales:", amountA, amountB);
+
+                // Convertir directamente con ethers.parseUnits
+                const parsedAmountA = ethers.parseUnits(amountA, 18); // 18 decimales
+                const parsedAmountB = ethers.parseUnits(amountB, 18); // 18 decimales
+
+                console.log("Valores convertidos:", parsedAmountA.toString(), parsedAmountB.toString());
+
+                // Llamar a la función del contrato `removeLiquidity` con los parámetros convertidos
+                const removeLiquidityTx = await dexContract.removeLiquidity(parsedAmountA, parsedAmountB);
+                        
                 // Esperar que se confirme la transacción
                 await removeLiquidityTx.wait();
-            
-                alert("Se quito liquidez del DEX con exito");
+                        
+                alert("Se quitó liquidez del DEX con éxito");
                 await getBalances();
                 await getReserves();
                 await getPrice();
@@ -347,24 +384,68 @@
         // Función para realizar intercambio (swap)
         async function swap(direction) {
             try {
+                const [reserveA, reserveB] = await dexContract.getReserves();
+
                 if (direction === "AtoB") {
-                    const amountA = ethers.parseUnits(document.getElementById("swapA").value, 18);
+                    if (reserveA <= 0 || reserveB <= 0) {
+                        alert("Las reservas de los Token's deben ser superiores a 0");
+                        return;
+                    }
+
+                    const amountA = document.getElementById("swapA").value.trim().replace(',', '.');
+
+                    if (!amountA) {
+                    alert("Monto invalido, debe agregar un monto");
+                    return;
+                    }
+
+                    if (amountA <= 0) {
+                        alert("El monto deben ser superiores a cero");
+                        return;
+                    }
+
+                    console.log("Valor original:", amountA);
+
+                    const parsedAmountA = ethers.parseUnits(amountA, 18); // 18 decimales
+
+                    console.log("Valor convertido:", parsedAmountA.toString());
 
                     // Configurar allowance para Token A
-                    const approveTx = await tokenAContract.approve(dexAddress, amountA);
+                    const approveTx = await tokenAContract.approve(dexAddress, parsedAmountA);
                     await approveTx.wait();
                 
-                    const swapTx = await dexContract.swapAforB(amountA);
+                    const swapTx = await dexContract.swapAforB(parsedAmountA);
                     await swapTx.wait();
                     alert("Swap TokenA por TokenB ejecutado exitosamente");
                 } else if (direction === "BtoA") {
-                    const amountB = ethers.parseUnits(document.getElementById("swapB").value, 18);
+                    if (reserveA <= 0 || reserveB <= 0) {
+                        alert("Las reservas de los Token's deben ser superiores a 0");
+                        return;
+                    }
+
+                    const amountB = document.getElementById("swapB").value.trim().replace(',', '.');
+
+                    if (!amountB) {
+                    alert("Monto invalido, debe agregar un monto");
+                    return;
+                    }
+
+                    if (amountB <= 0) {
+                        alert("El monto deben ser superiores a cero");
+                        return;
+                    }
+
+                    console.log("Valor original:", amountB);
+
+                    const parsedAmountB = ethers.parseUnits(amountB, 18); // 18 decimales
+
+                    console.log("Valor convertido:", parsedAmountB.toString());
                 
                     // Configurar allowance para Token B
-                    const approveTx = await tokenBContract.approve(dexAddress, amountB);
+                    const approveTx = await tokenBContract.approve(dexAddress, parsedAmountB);
                     await approveTx.wait();
                 
-                    const swapTx = await dexContract.swapBforA(amountB);
+                    const swapTx = await dexContract.swapBforA(parsedAmountB);
                     await swapTx.wait();
                     alert("Swap TokenB por TokenA ejecutado exitosamente");
                 }
@@ -419,6 +500,15 @@
         // Función para actualizar los precios
         async function getPrice() {
             try {
+                // Validar que no estén vacíos y sean números válidos
+                const [reserveA, reserveB] = await dexContract.getReserves();
+                if (!reserveA || !reserveB ) {
+                    document.getElementById('PrecioA').innerText = 'Las reservas deben ser superiores a cero para calcular el precio';
+                    document.getElementById('PrecioB').innerText = 'Las reservas deben ser superiores a cero para calcular el precio';
+                    return;
+                }
+
+
                 // Llama a la función getPrice con las direcciones de los tokens
                 const priceA = await dexContract.getPrice(tokenAAddress);
                 const priceB = await dexContract.getPrice(tokenBAddress);
